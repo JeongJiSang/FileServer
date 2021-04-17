@@ -13,10 +13,7 @@ public class ChatServer extends ServerSocket implements Runnable{
 	 * Key : 접속된 유저 아이디
 	 * Value : 접속된 유저의 소켓
 	 ************************/
-	public Map<String, ChatSocket> onlineUser = null; 
-	
-	
-	
+	protected Map<String, ChatSocket> onlineUser = null; 
 	
 	/**
 	 * 생성자
@@ -38,7 +35,7 @@ public class ChatServer extends ServerSocket implements Runnable{
 	 * 클라이언트가 접속을 할 때 실행되는 메소드
 	 */
 	public ChatSocket accpet() throws IOException {
-		ChatSocket chat = new ChatSocket();
+		ChatSocket chat = new ChatSocket(this);
 		implAccept(chat);
 		chat.serverStart();
 		return chat;
