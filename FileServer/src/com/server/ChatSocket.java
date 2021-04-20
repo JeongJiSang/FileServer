@@ -83,6 +83,47 @@ public class ChatSocket extends Socket implements Runnable{
 			e.printStackTrace();
 		}
 	}
+	/**
+	 *  채팅방에 해당하는 유저에게 메세지 전송
+	 *  @param server.onlineUser
+	 */
+	private void sendMSG(String roomName, String id, String msg) {
+		try {
+			List<ChatSocket> roomMember = new Vector<>();
+			roomMember.addAll(server.chatRoom.get(roomName));
+			for(ChatSocket user: roomMember) {
+				user.oos.writeObject(Protocol.sendMessage+Protocol.seperator
+						+roomName+Protocol.seperator
+						+id+Protocol.seperator
+						+msg+Protocol.seperator);
+			}
+		} catch (Exception e) {
+
+		}
+	}
+	/**
+	 *  채팅방 생성
+	 *  @param server.onlineUser
+	 */
+	private void createRoom(String roomName, String id, List<String> chatMember) {
+		List<ChatSocket> chatMemRef = new Vector<ChatSocket>();
+		chatMemRef.add(server.onlineUser.get(id));
+		for(String member:chatMember) {
+			chatMemRef.add(server.onlineUser.get(member));
+		}
+		server.chatRoom.put(roomName, chatMemRef);
+	}
+	/**
+	 * String으로 들어온 list 변환 메소드
+	 */
+	private List<String> decompose(String result){
+		List<String> list = new Vector<>();
+		String[] values = result.replaceAll("\\p{Punct}", "").split(" ");
+		for(String str:values) {
+			list.add(str);
+		}
+		return list;
+	}
 	@Override
 	public void run() {
 		boolean isStop = false;
@@ -130,14 +171,18 @@ public class ChatSocket extends Socket implements Runnable{
 					case Protocol.showUser:{ //120#
 						MyBatisServerDao serDao = new MyBatisServerDao();
 					}break;
-					case Protocol.createRoom:{ //200#
-						
+					case Protocol.createRoom:{ //200#roomName#id#chatMember
+						String roomName = st.nextToken();
+						String id = st.nextToken();
+						List<String> chatMember = decompose(st.nextToken());
+						createRoom(roomName, id, chatMember);
+						send(Protocol.createRoom);
 					}break;
 					case Protocol.closeRoom:{ //210#
 						
 					}break;
-					case Protocol.sendMessage:{ //300#
-						
+					case Protocol.sendMessage:{ //300#roomName#id#msg
+						sendMSG(st.nextToken(), st.nextToken(), st.nextToken());
 					}break;
 					case Protocol.sendEmoticon:{ //310#
 						

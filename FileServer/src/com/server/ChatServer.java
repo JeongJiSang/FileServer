@@ -2,6 +2,7 @@ package com.server;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.List;
 import java.util.Map;
 
 //1개만 존재하는 서버, 모든 클라이언트의 연결 및 클라이언트 1:1 맞춤 쓰레드 할당 담당
@@ -13,7 +14,8 @@ public class ChatServer extends ServerSocket implements Runnable{
 	 * Key : 접속된 유저 아이디
 	 * Value : 접속된 유저의 소켓
 	 ************************/
-	protected Map<String, ChatSocket> onlineUser = null; 
+	protected Map<String, ChatSocket> onlineUser = null;
+	protected Map<String, List<ChatSocket>> chatRoom = null;
 	
 	/**
 	 * 생성자
