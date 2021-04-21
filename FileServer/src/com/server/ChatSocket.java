@@ -165,8 +165,8 @@ public class ChatSocket extends Socket implements Runnable{
 					case Protocol.addUser:{ //110#
 						MyBatisServerDao serDao = new MyBatisServerDao();
 					}break;
-					case Protocol.addUserView:{ //111#
-						
+					case Protocol.addUserView:{ //111
+						send(Protocol.addUserView);
 					}break;
 					case Protocol.showUser:{ //120#
 						MyBatisServerDao serDao = new MyBatisServerDao();

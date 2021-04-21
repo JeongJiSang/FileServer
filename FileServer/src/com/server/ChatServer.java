@@ -2,6 +2,7 @@ package com.server;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 
@@ -22,6 +23,8 @@ public class ChatServer extends ServerSocket implements Runnable{
 	 */
 	public ChatServer(int port) throws IOException {
 		super(port);
+		onlineUser = new Hashtable<String, ChatSocket>();
+		chatRoom = new Hashtable<String, List<ChatSocket>>();
 		this.start();
 		
 	}
