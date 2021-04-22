@@ -99,6 +99,8 @@ public class MyBatisServerDao {
 		}
 		return offUser;
 	}
+	
+	
 	public static void main(String args[]) {
 		MyBatisServerDao serDao = new MyBatisServerDao();
 		String msg = serDao.checkLogin("jsj00203", "tige");
