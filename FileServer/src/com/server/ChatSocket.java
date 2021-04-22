@@ -160,13 +160,19 @@ public class ChatSocket extends Socket implements Runnable{
 							send(Protocol.checkLogin, result);//로그인실패메세지
 						}
 					}break;
-					case Protocol.logout:{ //101#id
-						String id = st.nextToken();
-						
-					}break;
 					case Protocol.addUser:{ //110#
 						MyBatisServerDao serDao = new MyBatisServerDao();
-						
+						String id = st.nextToken();
+						String pw = st.nextToken();
+						String name = st.nextToken();
+						String result = serDao.addUser(id, pw, name);
+						String fail = "fail";
+						String success = "success";
+						if(fail.equals(result)) {
+							send(Protocol.addUser,fail);
+						}else if(success.equals(success)) {
+							send(Protocol.addUser,success);
+						}
 						
 					}break;
 					case Protocol.addUserView:{ //111
@@ -175,22 +181,21 @@ public class ChatSocket extends Socket implements Runnable{
 					case Protocol.showUser:{ //120#
 
 					}break;
-					case Protocol.Logout:{ //130#myID
+					case Protocol.logout:{ //130#myID
 						//온라인 유저에서 내 아이디를 뺀 후 다시 showuser해야함.
 						String myID = st.nextToken();
 						server.onlineUser.remove(myID, this);
 						showUser(server.onlineUser);
-						send(Protocol.Logout);
+						send(Protocol.logout);
 						
 					}break;
 					case Protocol.createRoomView:{//201#myID
 						//나 자신을 제외한 id들 배열or벡터로 보내주기
 						String myID = st.nextToken();
 						List<String> chatMember = new Vector<>(); // 온라인 유저 넣어주기
-						for(String id : server.onlineUser.keySet()) {
-							chatMember.add(id);
-						}
+						chatMember.addAll(server.onlineUser.keySet());
 						chatMember.remove(myID);
+						System.out.println("서버측"+chatMember);
 						send(Protocol.createRoomView,chatMember.toString());
 					}break;
 					case Protocol.createRoom:{ //200#roomName#id#chatMember
