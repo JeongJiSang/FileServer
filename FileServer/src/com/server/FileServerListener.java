@@ -1,4 +1,4 @@
-package com.file;
+package com.server;
 //자동 정렬 Ctrl+Shift+F
 import java.io.IOException;
 
