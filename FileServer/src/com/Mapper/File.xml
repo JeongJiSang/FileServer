@@ -11,6 +11,15 @@
 						 )
 		}
 	</select>
+	<select id="addUser" statementType="CALLABLE" parameterType="java.lang.String" resultType="java.lang.String">
+		{CALL PROC_join(
+						   #{id, mode=IN, jdbcType=VARCHAR}
+						 , #{pw, mode=IN, jdbcType=VARCHAR}
+						 , #{name, mode=IN, jdbcType=VARCHAR}
+						 , #{msg, mode=OUT, jdbcType=VARCHAR}
+						 )
+		}
+	</select>
 	<select id="showUser" parameterType="java.lang.String" resultType="java.lang.String">
 		SELECT fid FROM filemem
 		WHERE NOT fid IN (
@@ -28,7 +37,7 @@
 	</select>
 	
 	<select id="AllSearch" resultType="string">
-		SELECT fid FROM filemem WHERE fid ='abcd123'
+		SELECT fid FROM filemem WHERE fid = #{id}
 	</select>
 	
 </mapper>

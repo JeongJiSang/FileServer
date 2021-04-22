@@ -65,6 +65,10 @@ public class ChatSocket extends Socket implements Runnable{
 			}
 		}
 	}
+//	private void addResult(String result){
+//		MyBatisServerDao serDao = new MyBatisServerDao();
+//		String addR = serDao.addUser(id, pw, name);
+//	}
 	/**
 	 *  온라인 유저목록, 오프라인 유저목록 전송
 	 *  @param server.onlineUser
@@ -83,6 +87,7 @@ public class ChatSocket extends Socket implements Runnable{
 			e.printStackTrace();
 		}
 	}
+	
 	/**
 	 *  채팅방에 해당하는 유저에게 메세지 전송
 	 *  @param server.onlineUser
@@ -164,6 +169,10 @@ public class ChatSocket extends Socket implements Runnable{
 					}break;
 					case Protocol.addUser:{ //110#
 						MyBatisServerDao serDao = new MyBatisServerDao();
+						String id = st.nextToken();
+						String pw = st.nextToken();
+						String name = st.nextToken();
+						serDao.addUser(id, pw, name);
 					}break;
 					case Protocol.addUserView:{ //111
 						send(Protocol.addUserView);
