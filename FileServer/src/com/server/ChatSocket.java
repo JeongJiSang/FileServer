@@ -170,8 +170,15 @@ public class ChatSocket extends Socket implements Runnable{
 					case Protocol.showUser:{ //120#
 						MyBatisServerDao serDao = new MyBatisServerDao();
 					}break;
-					case Protocol.createRoomView:{
-						send(Protocol.createRoomView);
+					case Protocol.createRoomView:{//201#myID
+						//나 자신을 제외한 id들 배열or벡터로 보내주기
+						String myID = st.nextToken();
+						List<String> chatMember = new Vector<>(); // 온라인 유저 넣어주기
+						for(String id : server.onlineUser.keySet()) {
+							chatMember.add(id);
+						}
+						chatMember.remove(myID);
+						send(Protocol.createRoomView,chatMember.toString());
 					}break;
 					case Protocol.createRoom:{ //200#roomName#id#chatMember
 						String roomName = st.nextToken();
