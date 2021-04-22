@@ -78,8 +78,7 @@ public class MyBatisServerDao {
 		Map<String, String> user = new HashMap<String, String>();
 		user.put("id", id);
 		user.put("pw", pw);
-		List<String> result = new Vector<String>();
-		
+		List<String> result = new Vector<String>();	
 		try {
 			sqlSession = sqlSessionFactory.openSession();
 			result = sqlSession.selectList("checkLogin", user);

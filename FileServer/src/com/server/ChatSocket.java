@@ -172,7 +172,14 @@ public class ChatSocket extends Socket implements Runnable{
 						String id = st.nextToken();
 						String pw = st.nextToken();
 						String name = st.nextToken();
-						serDao.addUser(id, pw, name);
+						String result = serDao.addUser(id, pw, name);
+						String fail = "fail";
+						String success = "success";
+						if(fail.equals(result)) {
+							send(Protocol.addUser,fail);
+						}else if(success.equals(success)) {
+							send(Protocol.addUser,success);
+						}
 					}break;
 					case Protocol.addUserView:{ //111
 						send(Protocol.addUserView);
