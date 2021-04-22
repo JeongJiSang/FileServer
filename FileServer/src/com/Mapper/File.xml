@@ -12,7 +12,7 @@
 		}
 	</select>
 	<select id="addUser" statementType="CALLABLE" parameterType="java.lang.String" resultType="java.lang.String">
-		{CALL PROC_join(
+		{CALL PROC_ (
 						   #{id, mode=IN, jdbcType=VARCHAR}
 						 , #{pw, mode=IN, jdbcType=VARCHAR}
 						 , #{name, mode=IN, jdbcType=VARCHAR}
