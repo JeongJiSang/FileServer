@@ -107,4 +107,10 @@ public class MyBatisServerDao {
 		System.out.println(msg);
 		
 	}
+	public String addUser(String id, String pw, String name) {
+		
+		
+		
+		return null;
+	}
 }

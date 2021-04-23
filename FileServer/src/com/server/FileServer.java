@@ -1,17 +1,20 @@
-package com.file;
+package com.server;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Hashtable;
+import java.util.Map;
 import java.util.Stack;
+import java.util.Vector;
 
 import com.common.FileException;
 
 
 public class FileServer extends ServerSocket implements Runnable {
-	private ArrayList<FileSocket> clients = null;
+	private Map<String, FileSocket> clients = null;
 	private Thread thread = null;
 	private Stack<Exception> errorList = null;
 	private File savePath = null;
@@ -22,10 +25,6 @@ public class FileServer extends ServerSocket implements Runnable {
 			throws IOException, FileException {
 		this(port, savePath, 1);
 	}
-
-	/**
-	 * 생성자
-	 */
 	public FileServer(int port, File savePath, int processSize) 
 			throws IOException, FileException {
 		super(port);
@@ -34,7 +33,7 @@ public class FileServer extends ServerSocket implements Runnable {
 			throw new FileException("File Path wrong!");
 		}
 		errorList = new Stack<Exception>();
-		clients = new ArrayList<FileSocket>();
+		clients = new Hashtable<String, FileSocket>();
 		this.processSize = processSize;
 		this.start();
 	}
@@ -80,7 +79,7 @@ public class FileServer extends ServerSocket implements Runnable {
 		while (!isStop) {
 			try {
 				FileSocket client = this.accept();
-				clients.add(client);
+				clients.put("a", client);
 				if (this.listener != null) {
 					this.listener.clientConnection(client);
 				}
@@ -89,9 +88,7 @@ public class FileServer extends ServerSocket implements Runnable {
 				if (this.listener != null) {
 					this.listener.connectionError(ie);
 				}
-			} catch (Exception e) {
-				
-			}
+			} 
 		}
 	}
 	public Exception getLastError() {
@@ -102,12 +99,11 @@ public class FileServer extends ServerSocket implements Runnable {
 			return null;
 		}
 	}
-
 	/**
 	 * 서버 종료
 	 */
 	public void close() throws IOException {
-		for (Socket client : clients) {
+		for (Socket client : clients.values()) {
 			client.close();
 		}
 		super.close();
