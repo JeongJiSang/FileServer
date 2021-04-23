@@ -170,12 +170,17 @@ public class ChatSocket extends Socket implements Runnable{
 					case Protocol.showUser:{ //120#
 						MyBatisServerDao serDao = new MyBatisServerDao();
 					}break;
-					case Protocol.Logout:{ //130#myID
+					case Protocol.logout:{ //130#myID
 						//온라인 유저에서 내 아이디를 뺀 후 다시 showuser해야함.
 						String myID = st.nextToken();
 						server.onlineUser.remove(myID, this);
-						showUser(server.onlineUser);
-						send(Protocol.Logout);
+						showUser(server.onlineUser);//로그아웃한 dtm갱신
+						//기존에 오픈된 채팅방에 있다면 퇴장메시지, 주소번지 빼주기
+						//server.chatRoom
+						
+						
+						//
+						send(Protocol.logout);
 						
 					}break;
 					case Protocol.createRoomView:{//201#myID
