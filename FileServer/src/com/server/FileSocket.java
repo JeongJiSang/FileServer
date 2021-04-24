@@ -46,6 +46,10 @@ public class FileSocket extends Socket implements Runnable{
 		try {
 			String savePath = ois.readObject().toString();
 			lengthData = new byte[FileBitConverter.INTBITSIZE];
+			File Path = new File(savefile.getPath() + "\\" +savePath);
+			if(!Path.exists()) {
+				Path.mkdirs();
+			}
 //파일이름 사이즈를 받는다.
 			receiver.read(lengthData, 0, lengthData.length);
 			length = FileBitConverter.toInt32(lengthData, 0);
@@ -107,27 +111,27 @@ public class FileSocket extends Socket implements Runnable{
 	 */
 	private void receiveWrite(FileOutputStream out, int length, FileListener listener) throws Exception {
 		//커넥션 체크
-				if (isClosed()) {
-					throw new SocketException("socket closed");
+		if (isClosed()) {
+			throw new SocketException("socket closed");
+		}
+		if (!isConnected()) {
+			throw new SocketException("socket diconnection");
+		}
+		byte[] buffer = new byte[4096];
+		int progressCount = 0;
+		while (progressCount < length) {
+			int bufferSize = 0;
+			while ((bufferSize = receiver.read(buffer)) > 0) {
+				out.write(buffer, 0, bufferSize);
+				progressCount += bufferSize;
+				// 리스너 파일 수신 진행율 호출
+				if (listener != null) {
+					listener.progressFileSizeAction(progressCount, length);
 				}
-				if (!isConnected()) {
-					throw new SocketException("socket diconnection");
-				}
-				byte[] buffer = new byte[4096];
-				int progressCount = 0;
-				while (progressCount < length) {
-					int bufferSize = 0;
-					while ((bufferSize = receiver.read(buffer)) > 0) {
-						out.write(buffer, 0, bufferSize);
-						progressCount += bufferSize;
-		// 리스너 파일 수신 진행율 호출
-						if (listener != null) {
-							listener.progressFileSizeAction(progressCount, length);
-						}
-						if (progressCount >= length) {
-							break;
-						}
-					}
+				if (progressCount >= length) {
+					break;
 				}
 			}
+		}
+	}
 }
