@@ -205,12 +205,10 @@ public class ChatSocket extends Socket implements Runnable{
 		                  //퇴장한 user를 제외한, 채팅방에 있는 유저들에게 oos 발송. 
 		                  server.chatRoom.replace(roomName, chatMemberRef);
 		                  
-		                  String fontColor = "0";
 		                  for(ChatSocket user:chatMemberRef) {
 		                     user.oos.writeObject(Protocol.closeRoom+Protocol.seperator
 		                                    +roomName+Protocol.seperator
-		                                    +id+Protocol.seperator
-		                                    +fontColor);
+		                                    +id);
 		                  }
 					}break;
 					case Protocol.sendMessage:{ //300#roomName#id#msg
