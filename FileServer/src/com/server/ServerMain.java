@@ -6,7 +6,8 @@ public class ServerMain {
 	public static void main(String[] args) {
 		try {
 			ChatServer chat = new ChatServer(9100);
-			//FileServer server = new FileServer(9999, new File("D:\\FileServer"));
+			File serverStorage = new File("D:\\FileServerStorage");
+			FileServer server = new FileServer(9101, serverStorage);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
