@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.SocketException;
@@ -16,6 +17,7 @@ import com.common.FileListener;
 public class FileSocket extends Socket implements Runnable{
 	private Thread thread = null;
 	private InputStream receiver = null;
+	private ObjectInputStream ois = null;
 	private OutputStream sender = null;
 	private Stack<Exception> errorList = null;
 	private File savefile = null;
@@ -30,6 +32,7 @@ public class FileSocket extends Socket implements Runnable{
 		thread = new Thread(this);
 		receiver = getInputStream();
 		sender = getOutputStream();
+		ois = new ObjectInputStream(getInputStream());
 		errorList = new Stack<Exception>();
 		thread.start();
 	}
@@ -41,6 +44,7 @@ public class FileSocket extends Socket implements Runnable{
 		String filename = "";
 		FileOutputStream out = null;
 		try {
+			String savePath = ois.readObject().toString();
 			lengthData = new byte[FileBitConverter.INTBITSIZE];
 //파일이름 사이즈를 받는다.
 			receiver.read(lengthData, 0, lengthData.length);
@@ -57,7 +61,7 @@ public class FileSocket extends Socket implements Runnable{
 			byte[] filenamebyte = new byte[length];
 			receiver.read(filenamebyte, 0, filenamebyte.length);
 			filename = new String(filenamebyte);
-			File file = new File(savefile.getPath() + "\\" + filename);
+			File file = new File(savefile.getPath() + "\\" +savePath+"\\"+ filename);
 //파일이 있으면 삭제
 			if (file.exists())
 				file.delete();
