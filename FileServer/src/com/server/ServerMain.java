@@ -2,8 +2,6 @@ package com.server;
 
 import java.io.File;
 
-import com.file.FileServer;
-
 public class ServerMain {
 	public static void main(String[] args) {
 		try {
