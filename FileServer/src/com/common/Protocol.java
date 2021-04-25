@@ -22,6 +22,7 @@ public class Protocol implements Serializable{
 	public static final String showUser = "120"; //유저리스트
 	public static final String logout = "130"; //로그아웃
 	
+
 	//채팅방 생성 관련 프로토콜
 	public static final String createRoom = "200"; //채팅방 생성
 	public static final String createRoomView = "201"; //채팅방 생성

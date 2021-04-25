@@ -30,6 +30,7 @@ public class MyBatisServerDao {
 	    return test;
 	}
 	public String addUser(String id, String pw, String name) {
+
 	      SqlSession sqlSession = null;
 	      Map<String,String> user = new HashMap<String,String>();
 	      user.put("id",id);
@@ -45,6 +46,8 @@ public class MyBatisServerDao {
 	      }
 	      return user.get("msg");
 	   }
+	
+
 	/*****************************
 	 * 프로시저 호출 이용
 	 * @param id
@@ -78,8 +81,7 @@ public class MyBatisServerDao {
 		Map<String, String> user = new HashMap<String, String>();
 		user.put("id", id);
 		user.put("pw", pw);
-		List<String> result = new Vector<String>();
-		
+		List<String> result = new Vector<String>();	
 		try {
 			sqlSession = sqlSessionFactory.openSession();
 			result = sqlSession.selectList("checkLogin", user);
@@ -119,7 +121,7 @@ public class MyBatisServerDao {
 	
 	public static void main(String args[]) {
 		MyBatisServerDao serDao = new MyBatisServerDao();
-		String msg = serDao.checkLogin("jsj00203", "tige");
+		String msg = serDao.addUser("awnefjanhrthwejf", "tige", "eee");
 		System.out.println(msg);
 		
 	}

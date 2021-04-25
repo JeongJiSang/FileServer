@@ -12,6 +12,7 @@
 		}
 	</select>
 	<select id="addUser" statementType="CALLABLE" parameterType="java.lang.String" resultType="java.lang.String">
+
       {CALL PROC_join(
                      #{id, mode=IN, jdbcType=VARCHAR}
                    , #{pw, mode=IN, jdbcType=VARCHAR}
@@ -37,7 +38,7 @@
 	</select>
 	
 	<select id="AllSearch" resultType="string">
-		SELECT fid FROM filemem WHERE fid ='abcd123'
+		SELECT fid FROM filemem WHERE fid = #{id}
 	</select>
 	
 </mapper>
