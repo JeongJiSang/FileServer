@@ -65,11 +65,14 @@ public class FileSocket extends Socket implements Runnable{
 			byte[] filenamebyte = new byte[length];
 			receiver.read(filenamebyte, 0, filenamebyte.length);
 			filename = new String(filenamebyte);
+			//만들어진 폴더경로에 client에서 보낸 파일 저장.
 			File file = new File(savefile.getPath() + "\\" +savePath+"\\"+ filename);
+			System.out.println("saved filePath: "+file);
 //파일이 있으면 삭제
 			if (file.exists())
 				file.delete();
 			out = new FileOutputStream(file);
+			System.out.println("fileSocket outStream: "+out);
 //파일 사이즈를 받는다.
 			receiver.read(lengthData, 0, lengthData.length);
 			length = FileBitConverter.toInt32(lengthData, 0);
