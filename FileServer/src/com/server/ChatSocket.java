@@ -84,6 +84,16 @@ public class ChatSocket extends Socket implements Runnable{
 			e.printStackTrace();
 		}
 	}
+	
+	private void showRoom() {
+		try {
+			List<String> serverRoomList = new Vector<>();
+			serverRoomList.addAll(server.chatRoom.keySet());//현재 서버에 저장되어있는(생성된) 채팅방 이름 가져오기
+			broadcasting(Protocol.showRoom,serverRoomList.toString());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 	/**
 	 *  채팅방에 해당하는 유저에게 메세지 전송
 	 *  @param server.onlineUser
@@ -225,15 +235,15 @@ public class ChatSocket extends Socket implements Runnable{
 						String myID = st.nextToken();
 						List<String> chatMember = new Vector<>(); // 온라인 유저 넣어주기
 						chatMember.addAll(server.onlineUser.keySet());
-						chatMember.remove(myID);
-						System.out.println("서버측"+chatMember);
+						chatMember.remove(myID); //나 자신 제외
 						send(Protocol.createRoomView,chatMember.toString());
 					}break;
 					case Protocol.createRoom:{ //200#roomName#id#chatMember
 						String roomName = st.nextToken();
 						String id = st.nextToken();
 						List<String> chatMember = decompose(st.nextToken());
-						createRoom(roomName, id, chatMember);
+						createRoom(roomName, id, chatMember); //생성된 방들 서버에 올라감
+						showRoom();
 						send(Protocol.createRoom,roomName);
 					}break;
 					case Protocol.closeRoom:{ //210#roomName#id
