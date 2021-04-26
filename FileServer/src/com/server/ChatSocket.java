@@ -270,7 +270,7 @@ public class ChatSocket extends Socket implements Runnable{
 						mySocket = server.onlineUser.get(id);
 						//roomName에 맞는 List에 id의 소켓 추가
 						server.chatRoom.get(roomName).add(mySocket);
-						
+						System.out.println(roomName);
 						for(ChatSocket user : server.chatRoom.get(roomName)) {
 							user.send(Protocol.enterRoom,id,roomName);
 						}
