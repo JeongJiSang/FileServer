@@ -84,6 +84,22 @@ public class ChatSocket extends Socket implements Runnable{
 			e.printStackTrace();
 		}
 	}
+	
+	/**
+	 * 
+	 * 현재 생성된 채팅방 목록 클라이언트에게 전송
+	 *  
+	 */
+	private void showRoom() {
+		//채팅방 인원 한명도 없으면 리스트에서 없애기 기능 추가해야함.
+		try {
+			List<String> serverRoomList = new Vector<>();
+			serverRoomList.addAll(server.chatRoom.keySet());//현재 서버에 저장되어있는(생성된) 채팅방 이름 가져오기
+			broadcasting(Protocol.showRoom,serverRoomList.toString());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 	/**
 	 *  채팅방에 해당하는 유저에게 메세지 전송
 	 *  @param server.onlineUser
@@ -113,6 +129,40 @@ public class ChatSocket extends Socket implements Runnable{
 		//채팅방 이름과 채팅방에 참여중인 모든 유저들을 Map으로 관리.
 		server.chatRoom.put(roomName, chatMemRef);
 	}
+	
+	
+	/**
+	 * 로그아웃 프로토콜, 메시지 전송
+	 * chatRoom의 채팅방마다 해당 유저 소켓 제거
+	 * List<String> roomNames - 제거된 유저가 있던 채팅방 이름들을 각 클라이언트에게 전송.
+	 * onlineUser에서 해당 유저 제거후 showUser로 갱신
+	 * 
+	 * @param id
+	 */
+	private void LogoutMSG(String id) {
+		//기존에 오픈된 채팅방에 있다면 퇴장메시지, 주소번지 빼주기
+		try {
+			List<String> roomNames = new Vector<>(); //클라로 보낼 (로그아웃 할 유저가 속해있는 방)방이름
+			for(String key : server.chatRoom.keySet()) {
+				List<ChatSocket> chatMemberRef = server.chatRoom.get(key);
+				for(int i=0; i<chatMemberRef.size(); i++) {
+					if(chatMemberRef.contains(this)) {
+						chatMemberRef.remove(this); //채팅방에 있는 유저리스트에서 제거4
+						roomNames.add(key); //해당 채팅방이름을 roomNames에 추가
+					}
+				}
+			}
+			for(String key : server.onlineUser.keySet()) { //온라인 유저들에게 각각 쏴주기
+				ChatSocket user = server.onlineUser.get(key);
+				user.send(Protocol.logout,id,roomNames.toString());
+			}
+			server.onlineUser.remove(id,this);
+			showUser(server.onlineUser);//로그아웃한 dtm갱신
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	/**
 	 * String으로 들어온 list 변환 메소드
 	 */
@@ -134,6 +184,7 @@ public class ChatSocket extends Socket implements Runnable{
 			run_start://while문같은 반복문 전체를 빠져 나가도록 처리할 때
 				while(!isStop) {
 					String msg = ois.readObject().toString();
+					System.out.println("msg ======== : "+msg);
 					StringTokenizer st = new StringTokenizer(msg, "#");
 					switch(st.nextToken()) {
 					case Protocol.checkLogin:{ //100#id#pw
@@ -186,18 +237,14 @@ public class ChatSocket extends Socket implements Runnable{
 					case Protocol.logout:{ //130#myID
 						//온라인 유저에서 내 아이디를 뺀 후 다시 showuser해야함.
 						String myID = st.nextToken();
-						server.onlineUser.remove(myID, this);
-						showUser(server.onlineUser);
-						send(Protocol.logout);
-						
+						LogoutMSG(myID);
 					}break;
 					case Protocol.createRoomView:{//201#myID
 						//나 자신을 제외한 id들 배열or벡터로 보내주기
 						String myID = st.nextToken();
 						List<String> chatMember = new Vector<>(); // 온라인 유저 넣어주기
 						chatMember.addAll(server.onlineUser.keySet());
-						chatMember.remove(myID);
-						System.out.println("서버측"+chatMember);
+						chatMember.remove(myID); //나 자신 제외
 						send(Protocol.createRoomView,chatMember.toString());
 					}break;
 					
@@ -205,10 +252,24 @@ public class ChatSocket extends Socket implements Runnable{
 						String roomName = st.nextToken();
 						String id = st.nextToken();
 						List<String> chatMember = decompose(st.nextToken());
-						createRoom(roomName, id, chatMember);
-						//send(Protocol.createRoom, roomName, id, chatMember.toString());
+						createRoom(roomName, id, chatMember); //생성된 방들 서버에 올라감
+						showRoom();
 						send(Protocol.createRoom,roomName);
 					}break;
+					case Protocol.enterRoom:{//203#id#roomName
+						String id = st.nextToken();
+						String roomName = st.nextToken();
+						
+						//중간 입장할 id의 소켓 가져오기
+						ChatSocket mySocket = null;
+						mySocket = server.onlineUser.get(id);
+						//roomName에 맞는 List에 id의 소켓 추가
+						server.chatRoom.get(roomName).add(mySocket);
+						
+						for(ChatSocket user : server.chatRoom.get(roomName)) {
+							user.send(Protocol.enterRoom,id,roomName);
+						}
+					}
 					case Protocol.closeRoom:{ //210#roomName#id
 						String roomName = st.nextToken();
 		                String id = st.nextToken();
