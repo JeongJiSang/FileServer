@@ -94,7 +94,7 @@ public class ChatSocket extends Socket implements Runnable{
 	 * 현재 생성된 채팅방 목록 클라이언트에게 전송
 	 *  
 	 */
-	private void showRoom() {
+	private void showRoom(Map<String, List<ChatSocket>> chatRoom) {
 		//채팅방 인원 한명도 없으면 리스트에서 없애기 기능 추가해야함.
 		try {
 			List<String> serverRoomList = new Vector<>();
@@ -211,6 +211,7 @@ public class ChatSocket extends Socket implements Runnable{
 								send(Protocol.checkLogin, result);
 								server.onlineUser.put(result, this);
 								showUser(server.onlineUser);
+								showRoom(server.chatRoom);
 							}
 						}
 						else { //로그인 실패
@@ -257,7 +258,7 @@ public class ChatSocket extends Socket implements Runnable{
 						String id = st.nextToken();
 						List<String> chatMember = decompose(st.nextToken());
 						createRoom(roomName, id, chatMember); //생성된 방들 서버에 올라감
-						showRoom();
+						showRoom(server.chatRoom);
 						send(Protocol.createRoom,roomName);
 					}break;
 					case Protocol.enterRoom:{//203#id#roomName
