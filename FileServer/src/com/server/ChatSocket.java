@@ -304,20 +304,12 @@ public class ChatSocket extends Socket implements Runnable{
 						String filePath = st.nextToken();
 						String fileName = st.nextToken();
 						String id = st.nextToken();
-						System.out.println(roomName+"#"+filePath+"#"+fileName+"#"+id);
 						try {
 							List<ChatSocket> roomMember = new Vector<>();
 							roomMember.addAll(server.chatRoom.get(roomName));
 							for(ChatSocket user: roomMember) {
-								user.oos.writeObject(Protocol.sendFile+Protocol.seperator
-										+roomName+Protocol.seperator
-										+id+Protocol.seperator
-										+fileName+Protocol.seperator);
+								user.send(Protocol.sendFile, roomName, id, fileName);
 							}
-							System.out.println("msg: "+Protocol.sendFile+Protocol.seperator
-									+roomName+Protocol.seperator
-									+id+Protocol.seperator
-									+fileName);
 						} catch (Exception e) {
 
 						}

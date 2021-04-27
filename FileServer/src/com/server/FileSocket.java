@@ -49,17 +49,15 @@ public class FileSocket extends Socket implements Runnable{
 		try {
 			//String savePath = ois.readObject().toString();
 			String msg = ois.readObject().toString(); //방이름으로 폴더생성 위한 스트링 수신받기
-			System.out.println(msg);
+			System.out.println("파일서버 msg: "+msg);
 			StringTokenizer st = new StringTokenizer(msg, "#");
 			String protocol = st.nextToken();
 			String savePath = st.nextToken();
-			System.out.println(protocol);
-			System.out.println(savePath);
 			if(protocol.equals("send")) {
 				String fileName = st.nextToken();
-				File sendFile = new File(savePath+ "\\" +fileName);
+				File sendFile = new File(savefile.getPath()+"\\"+savePath+ "\\" +fileName);
+				System.out.println("전송할 파일 경로: "+sendFile.getPath());
 				sendFile(sendFile);
-				
 			}
 			lengthData = new byte[FileBitConverter.INTBITSIZE];
 			File Path = new File(savefile.getPath() + "\\" +savePath);
