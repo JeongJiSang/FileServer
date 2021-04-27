@@ -94,9 +94,16 @@ public class ChatSocket extends Socket implements Runnable{
 	 * 현재 생성된 채팅방 목록 클라이언트에게 전송
 	 *  
 	 */
-	private void showRoom() {
+	private void showRoom(Map<String, List<ChatSocket>> chatRoom) {
 		//채팅방 인원 한명도 없으면 리스트에서 없애기 기능 추가해야함.
 		try {
+			List<ChatSocket> chatMemberRef = new Vector<>();
+			for(String room:server.chatRoom.keySet()) { 
+				chatMemberRef = server.chatRoom.get(room);
+				if(chatMemberRef.size()==0) {
+					server.chatRoom.remove(room);
+				}
+			}
 			List<String> serverRoomList = new Vector<>();
 			serverRoomList.addAll(server.chatRoom.keySet());//현재 서버에 저장되어있는(생성된) 채팅방 이름 가져오기
 			broadcasting(Protocol.showRoom,serverRoomList.toString());
@@ -147,12 +154,15 @@ public class ChatSocket extends Socket implements Runnable{
 		//기존에 오픈된 채팅방에 있다면 퇴장메시지, 주소번지 빼주기
 		try {
 			List<String> roomNames = new Vector<>(); //클라로 보낼 (로그아웃 할 유저가 속해있는 방)방이름
-			for(String key : server.chatRoom.keySet()) {
-				List<ChatSocket> chatMemberRef = server.chatRoom.get(key);
+			List<ChatSocket> chatMemberRef = new Vector<>();
+			for(String room : server.chatRoom.keySet()) {
+				chatMemberRef = server.chatRoom.get(room); //각 방에 참여하는 소켓리스트
+				
 				for(int i=0; i<chatMemberRef.size(); i++) {
 					if(chatMemberRef.contains(this)) {
-						chatMemberRef.remove(this); //채팅방에 있는 유저리스트에서 제거4
-						roomNames.add(key); //해당 채팅방이름을 roomNames에 추가
+						chatMemberRef.remove(this); //채팅방에 있는 유저리스트에서 제거
+						server.chatRoom.replace(room, chatMemberRef);
+						roomNames.add(room); //해당 채팅방이름을 roomNames에 추가
 					}
 				}
 			}
@@ -162,6 +172,7 @@ public class ChatSocket extends Socket implements Runnable{
 			}
 			server.onlineUser.remove(id,this);
 			showUser(server.onlineUser);//로그아웃한 dtm갱신
+			showRoom(server.chatRoom);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -211,6 +222,9 @@ public class ChatSocket extends Socket implements Runnable{
 								send(Protocol.checkLogin, result);
 								server.onlineUser.put(result, this);
 								showUser(server.onlineUser);
+								showRoom(server.chatRoom);
+
+
 							}
 						}
 						else { //로그인 실패
@@ -257,21 +271,36 @@ public class ChatSocket extends Socket implements Runnable{
 						String id = st.nextToken();
 						List<String> chatMember = decompose(st.nextToken());
 						createRoom(roomName, id, chatMember); //생성된 방들 서버에 올라감
-						showRoom();
+
+						showRoom(server.chatRoom);
+						
+						//chatMember한테 다 뿌려줘야하나?  A B C
 						send(Protocol.createRoom,roomName);
+						
 					}break;
 					case Protocol.enterRoom:{//203#id#roomName
 						String id = st.nextToken();
 						String roomName = st.nextToken();
-						
+						List<ChatSocket> chatMemberRef = new Vector<>();
+						chatMemberRef = server.chatRoom.get(roomName);
+						String result = "enter";
+						boolean success = true;
 						//중간 입장할 id의 소켓 가져오기
-						ChatSocket mySocket = null;
-						mySocket = server.onlineUser.get(id);
-						//roomName에 맞는 List에 id의 소켓 추가
-						server.chatRoom.get(roomName).add(mySocket);
+						ChatSocket enterUser = server.onlineUser.get(id);
 						
-						for(ChatSocket user : server.chatRoom.get(roomName)) {
-							user.send(Protocol.enterRoom,id,roomName);
+						for(ChatSocket socket : chatMemberRef) {
+							if(socket.equals(enterUser)) {
+								//이미 채팅방 리스트에 소켓이 있을때 - 이미 입장한 방입니다 메세지 보내주기
+								result = "overlap";
+								send(Protocol.enterRoom,id,roomName,result);
+								success = false;
+							}
+						}
+						if(success) { //채팅방 리스트에 없을때 -리스트에 소켓 추가, 각 유저들에게
+							chatMemberRef.add(enterUser);
+							for(ChatSocket user : chatMemberRef) {
+								user.send(Protocol.enterRoom,id,roomName,result);
+							}
 						}
 					}
 					case Protocol.closeRoom:{ //210#roomName#id
@@ -280,18 +309,17 @@ public class ChatSocket extends Socket implements Runnable{
 		                  List<ChatSocket> chatMemberRef = new Vector<ChatSocket>();
 		                  //채팅방에 있는 user들의 ChatSocket을 chatMemberRef에 새로 주입. 
 		                  chatMemberRef.addAll(server.chatRoom.get(roomName));
+		                  // (퇴장한 user를 제외한-> 노노, 본인자신도 클라쪽 chatView주소번지를 뼤야하기 때문에 본인애게도 oos보내야함 
+		                  // 채팅방에 있는 유저들에게 oos 발송. 
+		                  for(ChatSocket user:chatMemberRef) {
+		                	  user.send(Protocol.closeRoom,roomName,id);
+		                  }
 		                  //서버에 있는 onlineUser리스트에서, 나가는 유저의 ChatSocket을 closeUser에 주입. 
 		                  ChatSocket closeUser = server.onlineUser.get(id);
 		                  //chatMemberRef에서 나가는 user의 ChatSocket을 제거.
 		                  chatMemberRef.remove(closeUser);
-		                  //퇴장한 user를 제외한, 채팅방에 있는 유저들에게 oos 발송. 
 		                  server.chatRoom.replace(roomName, chatMemberRef);
-		                  
-		                  for(ChatSocket user:chatMemberRef) {
-		                     user.oos.writeObject(Protocol.closeRoom+Protocol.seperator
-		                                    +roomName+Protocol.seperator
-		                                    +id);
-		                  }
+		                  showRoom(server.chatRoom);
 					}break;
 					case Protocol.sendMessage:{ //300#roomName#id#msg
 						sendMSG(st.nextToken(), st.nextToken(), st.nextToken());
