@@ -286,15 +286,6 @@ public class ChatSocket extends Socket implements Runnable{
 						String result = "enter";
 						boolean success = true;
 						//중간 입장할 id의 소켓 가져오기
-
-						ChatSocket mySocket = null;
-						mySocket = server.onlineUser.get(id);
-						//roomName에 맞는 List에 id의 소켓 추가
-						server.chatRoom.get(roomName).add(mySocket);
-						System.out.println(roomName);
-						for(ChatSocket user : server.chatRoom.get(roomName)) {
-							user.send(Protocol.enterRoom,id,roomName);
-
 						ChatSocket enterUser = server.onlineUser.get(id);
 						
 						for(ChatSocket socket : chatMemberRef) {
@@ -307,11 +298,9 @@ public class ChatSocket extends Socket implements Runnable{
 						}
 						if(success) { //채팅방 리스트에 없을때 -리스트에 소켓 추가, 각 유저들에게
 							chatMemberRef.add(enterUser);
-							for(ChatSocket user1: chatMemberRef) {
-								user1.send(Protocol.enterRoom,id,roomName,result);
+							for(ChatSocket user : chatMemberRef) {
+								user.send(Protocol.enterRoom,id,roomName,result);
 							}
-
-						}
 						}
 					}
 					case Protocol.closeRoom:{ //210#roomName#id
