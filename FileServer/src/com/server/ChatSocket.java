@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -300,6 +301,18 @@ public class ChatSocket extends Socket implements Runnable{
 							}
 						}
 					}
+					case Protocol.inviteUser:{//204#roomName#id
+						String roomName = st.nextToken();
+						String myID = st.nextToken();
+						List<String> chatMember = new Vector<>(); // 온라인 유저 넣어주기
+						chatMember.addAll(server.onlineUser.keySet());
+						chatMember.remove(myID); //나 자신 제외
+						
+						
+						send(Protocol.createRoomView,chatMember.toString());
+						
+						
+					}break;
 					case Protocol.closeRoom:{ //210#roomName#id
 						String roomName = st.nextToken();
 		                String id = st.nextToken();
