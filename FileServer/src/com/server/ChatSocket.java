@@ -66,10 +66,6 @@ public class ChatSocket extends Socket implements Runnable{
 			}
 		}
 	}
-//	private void addResult(String result){
-//		MyBatisServerDao serDao = new MyBatisServerDao();
-//		String addR = serDao.addUser(id, pw, name);
-//	}
 	/**
 	 *  온라인 유저목록, 오프라인 유저목록 전송
 	 *  @param server.onlineUser
@@ -156,7 +152,7 @@ public class ChatSocket extends Socket implements Runnable{
 			List<String> roomNames = new Vector<>(); //클라로 보낼 (로그아웃 할 유저가 속해있는 방)방이름
 			List<ChatSocket> chatMemberRef = new Vector<>();
 			for(String room : server.chatRoom.keySet()) {
-				chatMemberRef = server.chatRoom.get(room); //각 방에 참여하는 소켓리스트
+				chatMemberRef = server.chatRoom.get(room); //각 방에 참여하는 소켓리스트 
 				
 				for(int i=0; i<chatMemberRef.size(); i++) {
 					if(chatMemberRef.contains(this)) {
