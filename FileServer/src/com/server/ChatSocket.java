@@ -265,8 +265,8 @@ public class ChatSocket extends Socket implements Runnable{
 						String serverRooms = server.chatRoom.keySet().toString();
 						send(Protocol.createRoomView,chatMember.toString(),serverRooms);
 					}break;
-					
 					case Protocol.createRoom:{ //200#roomName#id#chatMember
+						System.out.println("왔니1"+msg);
 						String roomName = st.nextToken();
 						String id = st.nextToken();
 						List<String> chatMember = decompose(st.nextToken());
@@ -275,7 +275,7 @@ public class ChatSocket extends Socket implements Runnable{
 						showRoom(server.chatRoom);
 						
 						//chatMember한테 다 뿌려줘야하나?  A B C
-						send(Protocol.createRoom,roomName,chatMember.toString());
+						send(Protocol.createRoom,roomName);
 						
 					}break;
 					/*
