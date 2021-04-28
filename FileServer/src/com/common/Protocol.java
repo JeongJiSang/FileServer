@@ -29,6 +29,7 @@ public class Protocol implements Serializable{
 	public static final String showRoom = "202"; //채팅방 목록 보여주기
 	public static final String enterRoom = "203"; //중간입장
 	public static final String inviteUser = "204"; //중간입장
+	public static final String inviteUserEnter = "205"; //중간입장
 	public static final String closeRoom = "210"; // 채팅방 퇴장
 	
 	//메세지 전송 관련 프로토콜

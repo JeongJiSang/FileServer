@@ -273,9 +273,10 @@ public class ChatSocket extends Socket implements Runnable{
 						createRoom(roomName, id, chatMember); //생성된 방들 서버에 올라감
 						
 						//chatMember한테 다 뿌려줘야하나?  A B C
-						send(Protocol.createRoom,roomName);
+						send(Protocol.createRoom,roomName,chatMember.toString());
 						
 					}break;
+					/*
 					case Protocol.enterRoom:{//203#id#roomName
 						String id = st.nextToken();
 						String roomName = st.nextToken();
@@ -300,19 +301,31 @@ public class ChatSocket extends Socket implements Runnable{
 								user.send(Protocol.enterRoom,id,roomName,result);
 							}
 						}
-					}
-					case Protocol.inviteUser:{//204#roomName#id
+					}*/
+					case Protocol.inviteUser:{//204#roomName#myID
 						String roomName = st.nextToken();
 						String myID = st.nextToken();
+						
 						List<String> chatMember = new Vector<>(); // 온라인 유저 넣어주기
 						chatMember.addAll(server.onlineUser.keySet());
 						chatMember.remove(myID); //나 자신 제외
 						
-						
-						send(Protocol.createRoomView,chatMember.toString());
-						
+						send(Protocol.inviteUser,roomName,chatMember.toString());
 						
 					}break;
+					case Protocol.inviteUserEnter:{//205#roomName#selected_ID
+						String roomName = st.nextToken();
+						List<String> chatMember = decompose(st.nextToken());
+						ChatSocket socket = null;
+						for(String key : chatMember) {
+							socket = server.onlineUser.get(key);
+							server.chatRoom.get(roomName).add(socket);
+						}
+						for(ChatSocket user : server.chatRoom.get(roomName)) {
+							user.send(Protocol.inviteUserEnter,roomName,chatMember.toString());
+						}
+						
+					}
 					case Protocol.closeRoom:{ //210#roomName#id
 						String roomName = st.nextToken();
 		                String id = st.nextToken();
