@@ -259,7 +259,10 @@ public class ChatSocket extends Socket implements Runnable{
 						List<String> chatMember = new Vector<>(); // 온라인 유저 넣어주기
 						chatMember.addAll(server.onlineUser.keySet());
 						chatMember.remove(myID); //나 자신 제외
-						send(Protocol.createRoomView,chatMember.toString());
+						
+						//채팅방 이름 중복체크를 위해 서버에 저장된 chatRoom을 클라이언트로 전송.
+						String serverRooms = server.chatRoom.keySet().toString();
+						send(Protocol.createRoomView,chatMember.toString(),serverRooms);
 					}break;
 					
 					case Protocol.createRoom:{ //200#roomName#id#chatMember
