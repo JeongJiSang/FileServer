@@ -67,10 +67,6 @@ public class ChatSocket extends Socket implements Runnable{
 			}
 		}
 	}
-//	private void addResult(String result){
-//		MyBatisServerDao serDao = new MyBatisServerDao();
-//		String addR = serDao.addUser(id, pw, name);
-//	}
 	/**
 	 *  온라인 유저목록, 오프라인 유저목록 전송
 	 *  @param server.onlineUser
@@ -95,7 +91,7 @@ public class ChatSocket extends Socket implements Runnable{
 	 * 현재 생성된 채팅방 목록 클라이언트에게 전송
 	 *  
 	 */
-	private void showRoom() {
+	private void showRoom(Map<String, List<ChatSocket>> chatRoom) {
 		//채팅방 인원 한명도 없으면 리스트에서 없애기 기능 추가해야함.
 		try {
 			List<ChatSocket> chatMemberRef = new Vector<>();
@@ -140,7 +136,6 @@ public class ChatSocket extends Socket implements Runnable{
 		}
 		//채팅방 이름과 채팅방에 참여중인 모든 유저들을 Map으로 관리.
 		server.chatRoom.put(roomName, chatMemRef);
-		showRoom();
 	}
 	
 	
@@ -158,7 +153,7 @@ public class ChatSocket extends Socket implements Runnable{
 			List<String> roomNames = new Vector<>(); //클라로 보낼 (로그아웃 할 유저가 속해있는 방)방이름
 			List<ChatSocket> chatMemberRef = new Vector<>();
 			for(String room : server.chatRoom.keySet()) {
-				chatMemberRef = server.chatRoom.get(room); //각 방에 참여하는 소켓리스트
+				chatMemberRef = server.chatRoom.get(room); //각 방에 참여하는 소켓리스트 
 				
 				for(int i=0; i<chatMemberRef.size(); i++) {
 					if(chatMemberRef.contains(this)) {
@@ -174,7 +169,7 @@ public class ChatSocket extends Socket implements Runnable{
 			}
 			server.onlineUser.remove(id,this);
 			showUser(server.onlineUser);//로그아웃한 dtm갱신
-			showRoom();
+			showRoom(server.chatRoom);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -224,7 +219,9 @@ public class ChatSocket extends Socket implements Runnable{
 								send(Protocol.checkLogin, result);
 								server.onlineUser.put(result, this);
 								showUser(server.onlineUser);
-								showRoom();//////////
+								showRoom(server.chatRoom);
+
+
 							}
 						}
 						else { //로그인 실패
@@ -263,7 +260,10 @@ public class ChatSocket extends Socket implements Runnable{
 						List<String> chatMember = new Vector<>(); // 온라인 유저 넣어주기
 						chatMember.addAll(server.onlineUser.keySet());
 						chatMember.remove(myID); //나 자신 제외
-						send(Protocol.createRoomView,chatMember.toString());
+						
+						//채팅방 이름 중복체크를 위해 서버에 저장된 chatRoom을 클라이언트로 전송.
+						String serverRooms = server.chatRoom.keySet().toString();
+						send(Protocol.createRoomView,chatMember.toString(),serverRooms);
 					}break;
 					
 					case Protocol.createRoom:{ //200#roomName#id#chatMember
@@ -271,6 +271,8 @@ public class ChatSocket extends Socket implements Runnable{
 						String id = st.nextToken();
 						List<String> chatMember = decompose(st.nextToken());
 						createRoom(roomName, id, chatMember); //생성된 방들 서버에 올라감
+
+						showRoom(server.chatRoom);
 						
 						//chatMember한테 다 뿌려줘야하나?  A B C
 						send(Protocol.createRoom,roomName,chatMember.toString());
@@ -342,7 +344,7 @@ public class ChatSocket extends Socket implements Runnable{
 		                  //chatMemberRef에서 나가는 user의 ChatSocket을 제거.
 		                  chatMemberRef.remove(closeUser);
 		                  server.chatRoom.replace(roomName, chatMemberRef);
-		                  showRoom();
+		                  showRoom(server.chatRoom);
 					}break;
 					case Protocol.sendMessage:{ //300#roomName#id#msg
 						sendMSG(st.nextToken(), st.nextToken(), st.nextToken());
@@ -355,20 +357,12 @@ public class ChatSocket extends Socket implements Runnable{
 						String filePath = st.nextToken();
 						String fileName = st.nextToken();
 						String id = st.nextToken();
-						System.out.println(roomName+"#"+filePath+"#"+fileName+"#"+id);
 						try {
 							List<ChatSocket> roomMember = new Vector<>();
 							roomMember.addAll(server.chatRoom.get(roomName));
 							for(ChatSocket user: roomMember) {
-								user.oos.writeObject(Protocol.sendFile+Protocol.seperator
-										+roomName+Protocol.seperator
-										+id+Protocol.seperator
-										+fileName+Protocol.seperator);
+								user.send(Protocol.sendFile, roomName, id, fileName);
 							}
-							System.out.println("msg: "+Protocol.sendFile+Protocol.seperator
-									+roomName+Protocol.seperator
-									+id+Protocol.seperator
-									+fileName);
 						} catch (Exception e) {
 
 						}

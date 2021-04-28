@@ -1,6 +1,7 @@
 package com.server;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -9,8 +10,10 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.Stack;
+import java.util.StringTokenizer;
 
 import com.common.FileBitConverter;
+import com.common.FileException;
 import com.common.FileListener;
 
 
@@ -44,7 +47,18 @@ public class FileSocket extends Socket implements Runnable{
 		String filename = "";
 		FileOutputStream out = null;
 		try {
-			String savePath = ois.readObject().toString();
+			//String savePath = ois.readObject().toString();
+			String msg = ois.readObject().toString(); //방이름으로 폴더생성 위한 스트링 수신받기
+			System.out.println("파일서버 msg: "+msg);
+			StringTokenizer st = new StringTokenizer(msg, "#");
+			String protocol = st.nextToken();
+			String savePath = st.nextToken();
+			if(protocol.equals("send")) {
+				String fileName = st.nextToken();
+				File sendFile = new File(savefile.getPath()+"\\"+savePath+ "\\" +fileName);
+				System.out.println("전송할 파일 경로: "+sendFile.getPath());
+				sendFile(sendFile);
+			}
 			lengthData = new byte[FileBitConverter.INTBITSIZE];
 			File Path = new File(savefile.getPath() + "\\" +savePath);
 			if(!Path.exists()) {
@@ -137,4 +151,63 @@ public class FileSocket extends Socket implements Runnable{
 			}
 		}
 	}
+	
+	/**
+	 * 파일 전송 메소드
+	 */
+	public void sendFile(File file) throws FileException, IOException {
+// 파라미터 체크
+		if (file == null) {
+			throw new FileException("File path not setting");
+		}
+// 전송 파일 체크
+		if (!file.isFile()) {
+			throw new FileException("File path not setting");
+		}
+// 접속 체크
+		if (!isConnected()) {
+			throw new FileException("Socket is closed");
+		}
+//파일 이름 체크
+		String filename = file.getName();
+		if (filename == null) {
+			throw new FileException("File path not setting");
+		}
+		FileInputStream in = null;
+		byte[] databyte = null;
+		byte[] filenamebyte = filename.getBytes();
+		try {
+// 리스너 업로드 개시 호출
+			if (listener != null) {
+				listener.uploadStart();
+			}
+			in = new FileInputStream(file);
+			byte[] length = FileBitConverter.getBytes(filenamebyte.length);
+//파일 이름 사이즈 전송
+			sender.write(length, 0, FileBitConverter.INTBITSIZE);
+//파일 이름 전송
+			sender.write(filenamebyte, 0, filenamebyte.length);
+//파일 사이즈 전송
+			length = FileBitConverter.getBytes((int) file.length());
+			sender.write(length, 0, FileBitConverter.INTBITSIZE);
+//파일 전송
+			databyte = new byte[(int) file.length()];
+			in.read(databyte, 0, databyte.length);
+			sender.write(databyte, 0, databyte.length);
+// 리스너 파일 사이즈 호출(이벤트 형식)
+			if (listener != null) {
+				listener.progressFileSizeAction(databyte.length, filenamebyte.length);
+			}
+// 리스너 업로드 완료 호출
+			if (listener != null) {
+				listener.uploadComplate();
+			}
+		} catch (IOException e) {
+			throw e;
+		} finally {
+			in.close();
+			close();
+		}
+	}
 }
+
