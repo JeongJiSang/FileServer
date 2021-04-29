@@ -133,9 +133,13 @@ public class ChatSocket extends Socket implements Runnable{
 				if(server.chatRoom.get(roomName).contains(this)) {
 					server.chatRoom.get(roomName).remove(this); //채팅방에 있는 유저리스트에서 로그아웃 유저의 소켓 제거
 				}
-				chatMemberRef = server.chatRoom.get(roomName); //각 방에 참여하는 소켓리스트 
-				for(ChatSocket user :chatMemberRef) {
-					user.send(Protocol.logout,logoutID,roomName);
+				chatMemberRef = server.chatRoom.get(roomName);
+				if(chatMemberRef.size()==0) {
+					server.chatRoom.remove(roomName);
+				}else {
+					for(ChatSocket user :chatMemberRef) {
+						user.send(Protocol.logout,logoutID,roomName);
+					}
 				}
 			}
 			server.onlineUser.remove(logoutID,this);
@@ -295,20 +299,18 @@ public class ChatSocket extends Socket implements Runnable{
 					}break;
 					case Protocol.closeRoom:{ //210#roomName#id
 						String roomName = st.nextToken();
-		                String id = st.nextToken();
-		                  List<ChatSocket> chatMemberRef = new Vector<ChatSocket>();
-		                  //채팅방에 있는 user들의 ChatSocket을 chatMemberRef에 새로 주입. 
-		                  chatMemberRef.addAll(server.chatRoom.get(roomName));
-		                  // (퇴장한 user를 제외한-> 노노, 본인자신도 클라쪽 chatView주소번지를 뼤야하기 때문에 본인애게도 oos보내야함 
-		                  // 채팅방에 있는 유저들에게 oos 발송. 
-		                  for(ChatSocket user:chatMemberRef) {
-		                	  user.send(Protocol.closeRoom,roomName,id);
-		                  }
-		                  //서버에 있는 onlineUser리스트에서, 나가는 유저의 ChatSocket을 closeUser에 주입. 
-		                  ChatSocket closeUser = server.onlineUser.get(id);
-		                  //chatMemberRef에서 나가는 user의 ChatSocket을 제거.
-		                  chatMemberRef.remove(closeUser);
-		                  server.chatRoom.replace(roomName, chatMemberRef);
+		                String closeID = st.nextToken();
+		                List<ChatSocket> chatMemberRef = new Vector<ChatSocket>();
+		                server.chatRoom.get(roomName).remove(this); //채팅방에서 나 자신 삭제
+
+		                chatMemberRef.addAll(server.chatRoom.get(roomName));
+		                if(chatMemberRef.size()==0) {
+		                	server.chatRoom.remove(roomName);
+		                }else {
+		                	for(ChatSocket user:chatMemberRef) {
+		                		user.send(Protocol.closeRoom,roomName,closeID);
+		                	}
+		                }
 					}break;
 					case Protocol.sendMessage:{ //300#roomName#id#msg
 						sendMSG(st.nextToken(), st.nextToken(), st.nextToken());
