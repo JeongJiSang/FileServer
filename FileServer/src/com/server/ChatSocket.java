@@ -320,7 +320,7 @@ public class ChatSocket extends Socket implements Runnable{
 							user.send(Protocol.inviteUserEnter,roomName,chatMember.toString());
 						}
 						
-					}
+					}break;
 					case Protocol.closeRoom:{ //210#roomName#id
 						String roomName = st.nextToken();
 		                String id = st.nextToken();
