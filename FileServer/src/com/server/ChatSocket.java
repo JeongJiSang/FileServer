@@ -87,28 +87,6 @@ public class ChatSocket extends Socket implements Runnable{
 	}
 	
 	/**
-	 * 
-	 * 현재 생성된 채팅방 목록 클라이언트에게 전송
-	 *  
-	 */
-	private void showRoom(Map<String, List<ChatSocket>> chatRoom) {
-		//채팅방 인원 한명도 없으면 리스트에서 없애기 기능 추가해야함.
-		try {
-			List<ChatSocket> chatMemberRef = new Vector<>();
-			for(String room:server.chatRoom.keySet()) { 
-				chatMemberRef = server.chatRoom.get(room);
-				if(chatMemberRef.size()==0) {
-					server.chatRoom.remove(room);
-				}
-			}
-			List<String> serverRoomList = new Vector<>();
-			serverRoomList.addAll(server.chatRoom.keySet());//현재 서버에 저장되어있는(생성된) 채팅방 이름 가져오기
-			broadcasting(Protocol.showRoom,serverRoomList.toString());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-	/**
 	 *  채팅방에 해당하는 유저에게 메세지 전송
 	 *  @param server.onlineUser
 	 */
@@ -147,7 +125,7 @@ public class ChatSocket extends Socket implements Runnable{
 	 * 
 	 * @param id
 	 */
-	private void LogoutMSG(String logoutID) {
+	private void logoutMSG(String logoutID) {
 		//기존에 오픈된 채팅방에 있다면 퇴장메시지, 주소번지 빼주기
 		try {
 			List<ChatSocket> chatMemberRef = new Vector<>();
@@ -162,7 +140,6 @@ public class ChatSocket extends Socket implements Runnable{
 			}
 			server.onlineUser.remove(logoutID,this);
 			showUser(server.onlineUser);//로그아웃한 dtm갱신
-			showRoom(server.chatRoom);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -212,9 +189,6 @@ public class ChatSocket extends Socket implements Runnable{
 								send(Protocol.checkLogin, result);
 								server.onlineUser.put(result, this);
 								showUser(server.onlineUser);
-								showRoom(server.chatRoom);
-
-
 							}
 						}
 						else { //로그인 실패
@@ -245,7 +219,7 @@ public class ChatSocket extends Socket implements Runnable{
 					case Protocol.logout:{ //130#myID
 						//온라인 유저에서 내 아이디를 뺀 후 다시 showuser해야함.
 						String myID = st.nextToken();
-						LogoutMSG(myID);
+						logoutMSG(myID);
 						
 					}break;
 					case Protocol.createRoomView:{//201#myID
@@ -265,9 +239,7 @@ public class ChatSocket extends Socket implements Runnable{
 						List<String> chatMember = decompose(st.nextToken());
 						createRoom(roomName, id, chatMember); //생성된 방들 서버에 올라감
 
-						showRoom(server.chatRoom);
 						
-						//chatMember한테 다 뿌려줘야하나?  A B C
 						send(Protocol.createRoom,roomName);
 						
 					}break;
@@ -337,7 +309,6 @@ public class ChatSocket extends Socket implements Runnable{
 		                  //chatMemberRef에서 나가는 user의 ChatSocket을 제거.
 		                  chatMemberRef.remove(closeUser);
 		                  server.chatRoom.replace(roomName, chatMemberRef);
-		                  showRoom(server.chatRoom);
 					}break;
 					case Protocol.sendMessage:{ //300#roomName#id#msg
 						sendMSG(st.nextToken(), st.nextToken(), st.nextToken());
