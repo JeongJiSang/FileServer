@@ -94,19 +94,12 @@ public class ChatSocket extends Socket implements Runnable{
 	 */
 	private void showRoom(Map<String, List<ChatSocket>> chatRoom) {
 		//채팅방 인원 한명도 없으면 리스트에서 없애기 기능 추가해야함.
-		try {
-			List<ChatSocket> chatMemberRef = new Vector<>();
-			for(String room:server.chatRoom.keySet()) { 
-				chatMemberRef = server.chatRoom.get(room);
-				if(chatMemberRef.size()==0) {
-					server.chatRoom.remove(room);
-				}
+		List<ChatSocket> chatMemberRef = new Vector<>();
+		for(String room:server.chatRoom.keySet()) { 
+			chatMemberRef = server.chatRoom.get(room);
+			if(chatMemberRef.size()==0) {
+				server.chatRoom.remove(room);
 			}
-			List<String> serverRoomList = new Vector<>();
-			serverRoomList.addAll(server.chatRoom.keySet());//현재 서버에 저장되어있는(생성된) 채팅방 이름 가져오기
-			broadcasting(Protocol.showRoom,serverRoomList.toString());
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
 	}
 	/**
