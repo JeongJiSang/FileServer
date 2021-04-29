@@ -145,8 +145,17 @@ public class ChatSocket extends Socket implements Runnable{
 			}
 			server.onlineUser.remove(logoutID,this);
 			showUser(server.onlineUser);//로그아웃한 dtm갱신
+			
 		} catch (IOException e) {
 			e.printStackTrace();
+		} finally {
+			try {
+				if (isConnected()) {
+					close();
+				}
+			}catch (Exception e2) {
+				
+			}
 		}
 	}
 	public List<String> getKey(String roomName) {

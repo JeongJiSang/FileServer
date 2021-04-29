@@ -40,7 +40,9 @@ public class ChatServer extends ServerSocket implements Runnable{
 	 * 클라이언트가 접속을 할 때 실행되는 메소드
 	 */
 	public ChatSocket accpet() throws IOException {
+		System.out.println("엑셉트하기전 : "+onlineUser.values());
 		ChatSocket chat = new ChatSocket(this);
+		System.out.println("엑셉트후 : "+onlineUser.values());
 		implAccept(chat);
 		chat.serverStart();
 		return chat;
