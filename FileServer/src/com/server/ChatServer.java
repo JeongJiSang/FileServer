@@ -53,7 +53,7 @@ public class ChatServer extends ServerSocket implements Runnable{
 				ChatSocket chat = this.accpet();
 				
 			} catch (Exception e) {
-				
+				e.printStackTrace();
 			}
 		}
 	}
