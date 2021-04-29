@@ -44,11 +44,12 @@ public class ChatSocket extends Socket implements Runnable{
 			if(i==str.length-1) 
 				msg = msg+str[i];
 			else 
-				msg = msg+str[i]+Protocol.seperator;				
+				msg = msg+str[i]+Protocol.seperator;
 		}
-		oos.writeObject(msg);
+		synchronized (this) {
+			oos.writeObject(msg);
+		}
 	}
-	
 	/**
 	 *  요청 전송 메소드 - 전체
 	 *  @param ProtocolNumber, String 입력 시 자동 전송
@@ -94,8 +95,10 @@ public class ChatSocket extends Socket implements Runnable{
 		try {
 			List<ChatSocket> roomMember = new Vector<>();
 			roomMember.addAll(server.chatRoom.get(roomName));
-			for(ChatSocket user: roomMember) {
-				user.send(Protocol.sendMessage,roomName,id,msg);
+			synchronized (this) {
+				for(ChatSocket user: roomMember) {
+					user.send(Protocol.sendMessage,roomName,id,msg);
+				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -109,10 +112,8 @@ public class ChatSocket extends Socket implements Runnable{
 		List<ChatSocket> chatMemRef = new Vector<ChatSocket>();
 		chatMemRef.add(server.onlineUser.get(id));//채팅방을 만든 user의 ChatSocket 넣기. 
 		for(String member:chatMember) {
-			//채팅방에 참여중인 user들의 ChatSocket을 넣기.
 			chatMemRef.add(server.onlineUser.get(member));
 		}
-		//채팅방 이름과 채팅방에 참여중인 모든 유저들을 Map으로 관리.
 		server.chatRoom.put(roomName, chatMemRef);
 	}
 	
@@ -148,6 +149,23 @@ public class ChatSocket extends Socket implements Runnable{
 			e.printStackTrace();
 		}
 	}
+	public List<String> getKey(String roomName) {
+		List<ChatSocket> user = server.chatRoom.get(roomName);
+		List<String> userName = new Vector<String>();
+		for(ChatSocket cs:user) {
+			for(String id:server.onlineUser.keySet()) {
+				if(cs.equals(server.onlineUser.get(id))) {
+					userName.add(id);
+				}
+			}
+		}
+		List<String> users = new Vector<String>();
+		users.addAll(server.onlineUser.keySet());
+		for(String s:userName) {
+			users.remove(s);
+		}
+        return users;
+    }
 	
 	/**
 	 * String으로 들어온 list 변환 메소드
@@ -170,7 +188,7 @@ public class ChatSocket extends Socket implements Runnable{
 			run_start://while문같은 반복문 전체를 빠져 나가도록 처리할 때
 				while(!isStop) {
 					String msg = ois.readObject().toString();
-					System.out.println("msg ======== : "+msg);
+					System.out.println("msg === : "+msg);
 					StringTokenizer st = new StringTokenizer(msg, "#");
 					switch(st.nextToken()) {
 					case Protocol.checkLogin:{ //100#id#pw
@@ -187,7 +205,6 @@ public class ChatSocket extends Socket implements Runnable{
 									seccess = false;
 									break;
 								}
-								
 							}
 							if(seccess) {//로그인 성공
 								send(Protocol.checkLogin, result);
@@ -199,22 +216,19 @@ public class ChatSocket extends Socket implements Runnable{
 							send(Protocol.checkLogin, result);//로그인실패메세지
 						}
 					}break;
-					case Protocol.addUser:{ //110#
+					case Protocol.addUser:{ //110#id#pw#name
 						MyBatisServerDao serDao = new MyBatisServerDao();
 						String id = st.nextToken();
 						String pw = st.nextToken();
 						String name = st.nextToken();
 						String result = serDao.addUser(id, pw, name);
-						String fail = "fail";
-						String success = "success";
-						if(fail.equals(result)) {
-							send(Protocol.addUser,fail);
-						}else if(success.equals(success)) {
-							send(Protocol.addUser,success);
+						if("fail".equals(result)) {
+							send(Protocol.addUser,result);
+						}else if("success".equals(result)) {
+							send(Protocol.addUser,result);
 						}
-
 					}break;
-					case Protocol.addUserView:{ //111
+					case Protocol.addUserView:{ //111#
 						send(Protocol.addUserView);
 					}break;
 					case Protocol.showUser:{ //120#
@@ -242,60 +256,23 @@ public class ChatSocket extends Socket implements Runnable{
 						String id = st.nextToken();
 						List<String> chatMember = decompose(st.nextToken());
 						createRoom(roomName, id, chatMember); //생성된 방들 서버에 올라감
-
-						
 						send(Protocol.createRoom,roomName);
-						
 					}break;
-					/*
-					case Protocol.enterRoom:{//203#id#roomName
-						String id = st.nextToken();
-						String roomName = st.nextToken();
-						List<ChatSocket> chatMemberRef = new Vector<>();
-						chatMemberRef = server.chatRoom.get(roomName);
-						String result = "enter";
-						boolean success = true;
-						//중간 입장할 id의 소켓 가져오기
-						ChatSocket enterUser = server.onlineUser.get(id);
-						
-						for(ChatSocket socket : chatMemberRef) {
-							if(socket.equals(enterUser)) {
-								//이미 채팅방 리스트에 소켓이 있을때 - 이미 입장한 방입니다 메세지 보내주기
-								result = "overlap";
-								send(Protocol.enterRoom,id,roomName,result);
-								success = false;
-							}
-						}
-						if(success) { //채팅방 리스트에 없을때 -리스트에 소켓 추가, 각 유저들에게
-							chatMemberRef.add(enterUser);
-							for(ChatSocket user : chatMemberRef) {
-								user.send(Protocol.enterRoom,id,roomName,result);
-							}
-						}
-					}*/
-					case Protocol.inviteUser:{//204#roomName#myID
+					case Protocol.inviteUserView:{//204#roomName#myID
 						String roomName = st.nextToken();
 						String myID = st.nextToken();
-						
-						List<String> chatMember = new Vector<>(); // 온라인 유저 넣어주기
-						chatMember.addAll(server.onlineUser.keySet());
-						chatMember.remove(myID); //나 자신 제외
-						
-						send(Protocol.inviteUser,roomName,chatMember.toString());
+						List<String> userName = getKey(roomName);
+						send(Protocol.inviteUserView,roomName,userName.toString());
 						
 					}break;
-					case Protocol.inviteUserEnter:{//205#roomName#selected_ID
+					case Protocol.inviteUser:{//205#roomName#newUserList
 						String roomName = st.nextToken();
+						List<ChatSocket> chatUser = server.chatRoom.get(roomName);
 						List<String> chatMember = decompose(st.nextToken());
-						ChatSocket socket = null;
-						for(String key : chatMember) {
-							socket = server.onlineUser.get(key);
-							server.chatRoom.get(roomName).add(socket);
+						for(String u:chatMember) {
+							chatUser.add(server.onlineUser.get(u));
 						}
-						for(ChatSocket user : server.chatRoom.get(roomName)) {
-							user.send(Protocol.inviteUserEnter,roomName,chatMember.toString());
-						}
-						
+						server.chatRoom.put(roomName, chatUser);
 					}break;
 					case Protocol.closeRoom:{ //210#roomName#id
 						String roomName = st.nextToken();
@@ -314,6 +291,7 @@ public class ChatSocket extends Socket implements Runnable{
 					}break;
 					case Protocol.sendMessage:{ //300#roomName#id#msg
 						sendMSG(st.nextToken(), st.nextToken(), st.nextToken());
+						
 					}break;
 					case Protocol.sendEmoticon:{ //310#
 						
@@ -323,20 +301,16 @@ public class ChatSocket extends Socket implements Runnable{
 						String filePath = st.nextToken();
 						String fileName = st.nextToken();
 						String id = st.nextToken();
-						try {
-							List<ChatSocket> roomMember = new Vector<>();
-							roomMember.addAll(server.chatRoom.get(roomName));
-							for(ChatSocket user: roomMember) {
-								user.send(Protocol.sendFile, roomName, id, fileName);
-							}
-						} catch (Exception e) {
-
+						List<ChatSocket> roomMember = new Vector<>();
+						roomMember.addAll(server.chatRoom.get(roomName));
+						for(ChatSocket user: roomMember) {
+							user.send(Protocol.sendFile, roomName, id, fileName);
 						}
 					}break;
 					}
 				}
 		} catch(Exception e) {
-
+			e.printStackTrace();
 		}
 	}
 

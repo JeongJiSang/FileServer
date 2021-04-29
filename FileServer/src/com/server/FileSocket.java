@@ -207,6 +207,7 @@ public class FileSocket extends Socket implements Runnable{
 		} finally {
 			in.close();
 			close();
+			
 		}
 	}
 }
