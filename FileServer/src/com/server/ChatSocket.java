@@ -148,27 +148,20 @@ public class ChatSocket extends Socket implements Runnable{
 	 * 
 	 * @param id
 	 */
-	private void LogoutMSG(String id) {
+	private void LogoutMSG(String logoutID) {
 		//기존에 오픈된 채팅방에 있다면 퇴장메시지, 주소번지 빼주기
 		try {
-			List<String> roomNames = new Vector<>(); //클라로 보낼 (로그아웃 할 유저가 속해있는 방)방이름
 			List<ChatSocket> chatMemberRef = new Vector<>();
-			for(String room : server.chatRoom.keySet()) {
-				chatMemberRef = server.chatRoom.get(room); //각 방에 참여하는 소켓리스트
-				
-				for(int i=0; i<chatMemberRef.size(); i++) {
-					if(chatMemberRef.contains(this)) {
-						chatMemberRef.remove(this); //채팅방에 있는 유저리스트에서 제거
-						server.chatRoom.replace(room, chatMemberRef);
-						roomNames.add(room); //해당 채팅방이름을 roomNames에 추가
-					}
+			for(String roomName : server.chatRoom.keySet()) {
+				if(server.chatRoom.get(roomName).contains(this)) {
+					server.chatRoom.get(roomName).remove(this); //채팅방에 있는 유저리스트에서 로그아웃 유저의 소켓 제거
+				}
+				chatMemberRef = server.chatRoom.get(roomName); //각 방에 참여하는 소켓리스트 
+				for(ChatSocket user :chatMemberRef) {
+					user.send(Protocol.logout,logoutID,roomName);
 				}
 			}
-			for(String key : server.onlineUser.keySet()) { //온라인 유저들에게 각각 쏴주기
-				ChatSocket user = server.onlineUser.get(key);
-				user.send(Protocol.logout,id,roomNames.toString());
-			}
-			server.onlineUser.remove(id,this);
+			server.onlineUser.remove(logoutID,this);
 			showUser(server.onlineUser);//로그아웃한 dtm갱신
 			showRoom(server.chatRoom);
 		} catch (IOException e) {
@@ -265,6 +258,7 @@ public class ChatSocket extends Socket implements Runnable{
 						//온라인 유저에서 내 아이디를 뺀 후 다시 showuser해야함.
 						String myID = st.nextToken();
 						LogoutMSG(myID);
+						
 					}break;
 					case Protocol.createRoomView:{//201#myID
 						//나 자신을 제외한 id들 배열or벡터로 보내주기
